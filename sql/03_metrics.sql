@@ -38,12 +38,12 @@ base_table as (
 -- =========================
 -- Основные метрики
 -- =========================
-	select 
-		sum(total_payment) as revenue, 
-		round((sum(total_payment) / count(distinct order_id))::numeric, 3) as AOV,
-		round(avg(items_count), 3) as avg_items_count
-	from base_table 
-	where order_status = 'delivered'
+select 
+	sum(total_payment) as revenue, 
+	round((sum(total_payment) / count(distinct order_id))::numeric, 3) as AOV,
+	round(avg(items_count), 3) as avg_items_count
+from base_table 
+where order_status = 'delivered'
 
 -- =========================
 -- Динамика по месяцам
@@ -53,8 +53,17 @@ select
 	count(distinct order_id) as orders_per_month, 
 	sum(total_payment) as revenue_per_month,
 	sum(items_count) as items_per_month,
-	avg(items_count) as avg_items_per_order,
-	round((sum(total_payment) / count(distinct order_id))::numeric, 3) as AOV_per_month,
+	round(avg(items_count), 3) as avg_items_per_order,
+	round((sum(total_payment) / count(distinct order_id))::numeric, 3) as AOV_per_month
+from base_table
+where order_status = 'delivered'
+group by date_trunc('month', order_purchase_timestamp)
+
+-- =========================
+-- Процент отмен
+-- =========================
+select 
+	date_trunc('month', order_purchase_timestamp) as month,
 	round(count(case when order_status = 'canceled' then 1 end) * 100.0 / count(*), 3) as "cancel_rate, %"
 from base_table
 group by date_trunc('month', order_purchase_timestamp)
